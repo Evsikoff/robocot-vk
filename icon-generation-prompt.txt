@@ -1,0 +1,67 @@
+ПРОМПТ ДЛЯ ГЕНЕРАЦИИ ИКОНКИ ИГРЫ "ПРОГРАММИРОВАНИЕ - ЭТО ВЕСЕЛО!"
+============================================================================
+
+АНГЛИЙСКАЯ ВЕРСИЯ (для Midjourney, DALL-E, Stable Diffusion):
+-----------------------------------------------------------------------------
+Create a game icon for an educational coding game for children aged 6-12.
+Main subject: friendly cartoon robot named "Biip" with a cute, approachable design.
+The robot should have a rounded, simple geometric body with bright cheerful colors
+(blue, orange, pink accents). Include subtle coding/programming elements like
+small circuit patterns, binary code, or colorful code blocks in the background.
+Style: vibrant, playful, child-friendly 3D rendered illustration.
+The icon should work well at small sizes (512x512px).
+Background: soft gradient from bright blue to purple, with subtle geometric patterns.
+The robot should be in the center, slightly tilted, with a happy expression and
+glowing eyes. Add a slight glow/shine effect to make it pop.
+Overall mood: fun, welcoming, educational, inspiring curiosity about programming.
+
+Keywords: cute robot, educational game icon, children's coding app, 3D character,
+colorful, friendly, programming symbols, tech education, playful design
+
+РУССКАЯ ВЕРСИЯ (для Kandinsky, YandexART, ruDALL-E):
+-----------------------------------------------------------------------------
+Создай иконку для образовательной игры о программировании для детей 6-12 лет.
+Главный объект: дружелюбный мультяшный робот по имени "Biip" с милым,
+привлекательным дизайном. Робот должен иметь округлое тело из простых
+геометрических форм с яркими жизнерадостными цветами (синий, оранжевый,
+розовые акценты). Добавь тонкие элементы программирования, такие как узоры
+из схем, двоичный код или разноцветные блоки кода на фоне.
+Стиль: яркая, игривая, детская 3D иллюстрация.
+Иконка должна хорошо выглядеть в маленьком размере (512x512px).
+Фон: мягкий градиент от ярко-синего к фиолетовому с тонкими геометрическими
+узорами. Робот в центре, слегка наклонён, с радостным выражением и светящимися
+глазами. Добавь лёгкий эффект свечения/блеска.
+Общее настроение: весёлое, приветливое, образовательное, вдохновляющее
+любопытство к программированию.
+
+Ключевые слова: милый робот, иконка образовательной игры, детское приложение
+для изучения кодирования, 3D персонаж, красочный, дружелюбный, символы
+программирования, техническое образование, игривый дизайн
+
+ДОПОЛНИТЕЛЬНЫЕ ВАРИАНТЫ:
+============================================================================
+
+ВАРИАНТ 1 - МИНИМАЛИСТИЧНЫЙ:
+"Minimalist flat design icon, cute robot character Biip, simple geometric shapes,
+bright gradient background (blue to purple), coding symbols as subtle decorative
+elements, child-friendly, modern, clean, 512x512px app icon style"
+
+ВАРИАНТ 2 - С АКЦЕНТОМ НА ОБУЧЕНИЕ:
+"Educational game icon featuring cheerful robot mascot surrounded by colorful
+code blocks and programming symbols, 3D isometric style, vibrant colors,
+playful atmosphere, suitable for children's learning app, square icon format"
+
+ВАРИАНТ 3 - ДИНАМИЧНЫЙ:
+"Dynamic 3D rendered game icon, energetic robot character jumping or waving,
+sparkles and light effects, coding elements floating around, bold vibrant colors,
+fun and inviting design for kids coding game, high-quality app icon"
+
+ТЕХНИЧЕСКИЕ ПАРАМЕТРЫ:
+-----------------------------------------------------------------------------
+Размер: 512x512px или 1024x1024px (для масштабирования)
+Формат: PNG с прозрачностью или квадратный с фоном
+Цветовая палитра:
+  - Основные: #4A90E2 (синий), #FF6B6B (коралловый), #A463F2 (фиолетовый)
+  - Акценты: #FFD93D (жёлтый), #6BCF7F (зелёный)
+Стиль: 3D rendered, cartoon, child-friendly
+Композиция: Центрированная, персонаж занимает 60-70% пространства иконки
