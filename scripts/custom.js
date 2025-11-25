@@ -1,8 +1,8 @@
 (function () {
   function removeElements(selector) {
     document.querySelectorAll(selector).forEach((el) => {
-      if (el && el.parentElement) {
-        el.parentElement.removeChild(el);
+      if (el) {
+        el.remove();
       }
     });
   }
@@ -24,8 +24,8 @@
   function removeEquinorLogo() {
     document.querySelectorAll('svg._08ab7').forEach((el) => {
       const target = el.closest('button, div, span') || el;
-      if (target && target.parentElement) {
-        target.parentElement.removeChild(target);
+      if (target) {
+        target.remove();
       }
     });
   }
