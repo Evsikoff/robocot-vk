@@ -28,8 +28,10 @@
     <script>
         window.__PRELOADED_STATE__ = {}
     </script>
-    <!-- VK Bridge SDK -->
-    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+    <!-- VK iframe compatibility fix - MUST load first -->
+    <script src="scripts/vk-iframe-fix.js"></script>
+    <!-- VK Bridge SDK (latest version with iframe compatibility) -->
+    <script src="https://unpkg.com/@vkontakte/vk-bridge@2.14.2/dist/browser.min.js"></script>
     <script>
         ! function(e, t, a, n, g) {
             e[n] = e[n] || [], e[n].push({
