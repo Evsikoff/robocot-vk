@@ -17,28 +17,63 @@
     return isWebView;
   }
 
-  // Safe storage wrapper
+  // Safe storage wrapper with VK Storage integration
   const safeStorage = {
-    getItem: function(storage, key) {
+    getItem: async function(storage, key) {
       try {
-        return storage.getItem(key);
+        // Try to get from VK Storage first
+        if (window.VKBridgeWrapper && window.VKBridgeWrapper.initialized) {
+          debugLog('Trying to get from VK Storage:', key);
+          const vkValue = await window.VKBridgeWrapper.storageGet(key);
+          if (vkValue !== null && vkValue !== '') {
+            debugLog('Got value from VK Storage:', { key, value: vkValue });
+            return vkValue;
+          }
+          debugLog('No value in VK Storage, falling back to localStorage');
+        }
+
+        // Fallback to localStorage
+        const localValue = storage.getItem(key);
+        debugLog('Got value from localStorage:', { key, value: localValue });
+        return localValue;
       } catch (e) {
         debugLog('Storage getItem error:', e.message);
-        return null;
+        // Try localStorage as final fallback
+        try {
+          return storage.getItem(key);
+        } catch (e2) {
+          return null;
+        }
       }
     },
-    setItem: function(storage, key, value) {
+    setItem: async function(storage, key, value) {
       try {
+        // Save to localStorage
         storage.setItem(key, value);
+        debugLog('Saved to localStorage:', { key, value });
+
+        // Also save to VK Storage
+        if (window.VKBridgeWrapper && window.VKBridgeWrapper.initialized) {
+          debugLog('Saving to VK Storage:', { key, value });
+          await window.VKBridgeWrapper.storageSet(key, value);
+          debugLog('Saved to VK Storage successfully');
+        }
+
         return true;
       } catch (e) {
         debugLog('Storage setItem error:', e.message);
         return false;
       }
     },
-    removeItem: function(storage, key) {
+    removeItem: async function(storage, key) {
       try {
         storage.removeItem(key);
+
+        // Also remove from VK Storage (by setting to empty string)
+        if (window.VKBridgeWrapper && window.VKBridgeWrapper.initialized) {
+          await window.VKBridgeWrapper.storageSet(key, '');
+        }
+
         return true;
       } catch (e) {
         debugLog('Storage removeItem error:', e.message);
@@ -62,7 +97,14 @@
           keysToRemove.push(key);
         }
       }
-      keysToRemove.forEach(key => safeStorage.removeItem(localStorage, key));
+      // Use direct localStorage.removeItem for routing cleanup (no VK Storage sync needed)
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          debugLog('Error removing key:', key);
+        }
+      });
       debugLog('Cleared routing keys:', keysToRemove.length);
     } catch (e) {
       debugLog('Could not clear localStorage:', e.message);
@@ -354,6 +396,70 @@
     applyTweaks();
   }
 
+  // Setup interstitial ads for "Next" button
+  function setupInterstitialAds() {
+    let lastAdTime = 0;
+    const AD_COOLDOWN = 60000; // Show ad at most once per minute
+
+    const handleNextButtonClick = async (event) => {
+      const now = Date.now();
+
+      // Check if enough time has passed since last ad
+      if (now - lastAdTime < AD_COOLDOWN) {
+        debugLog('Ad cooldown active, skipping');
+        return;
+      }
+
+      // Check if VK Bridge is available
+      if (!window.VKBridgeWrapper || !window.VKBridgeWrapper.initialized) {
+        debugLog('VK Bridge not available for ads');
+        return;
+      }
+
+      try {
+        debugLog('Showing interstitial ad for Next button click');
+        const adShown = await window.VKBridgeWrapper.showInterstitialAd();
+
+        if (adShown) {
+          lastAdTime = now;
+          debugLog('Interstitial ad shown successfully');
+        } else {
+          debugLog('Interstitial ad was not shown');
+        }
+      } catch (error) {
+        debugLog('Error showing interstitial ad:', error);
+      }
+    };
+
+    // Monitor for Next button clicks
+    const observer = new MutationObserver(() => {
+      const nextButtons = document.querySelectorAll('button._4e75b');
+
+      nextButtons.forEach(button => {
+        if (button.dataset.vkAdListener === 'true') return;
+
+        button.dataset.vkAdListener = 'true';
+        button.addEventListener('click', handleNextButtonClick);
+        debugLog('Added ad listener to Next button');
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Check for existing buttons
+    const existingButtons = document.querySelectorAll('button._4e75b');
+    existingButtons.forEach(button => {
+      if (button.dataset.vkAdListener === 'true') return;
+
+      button.dataset.vkAdListener = 'true';
+      button.addEventListener('click', handleNextButtonClick);
+      debugLog('Added ad listener to existing Next button');
+    });
+  }
+
   function applyResponsiveLogoBehavior() {
     if (isMobileLandscape()) {
       // Mobile landscape: replace SVG logo with IMG
@@ -446,6 +552,13 @@
       debugLog('setupLevelSelectionTweaks completed');
     } catch (e) {
       debugLog('Error in setupLevelSelectionTweaks:', e.message);
+    }
+
+    try {
+      setupInterstitialAds();
+      debugLog('setupInterstitialAds completed');
+    } catch (e) {
+      debugLog('Error in setupInterstitialAds:', e.message);
     }
 
     try {
