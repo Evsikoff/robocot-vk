@@ -302,11 +302,74 @@
   }
 
   /**
+   * Setup Next button click monitoring for progress saving
+   */
+  function setupNextButtonMonitoring() {
+    const handleNextButtonClick = async () => {
+      log('info', '🖱️ Обнаружен клик на кнопку "Далее"');
+
+      // Small delay to allow state to update after click
+      setTimeout(async () => {
+        const progress = extractProgressFromState();
+
+        if (progress && progress.currentLevel !== undefined) {
+          const { currentLevel, currentLevelGroup } = progress;
+
+          log('info', '💾 Сохранение прогресса после клика на "Далее"', {
+            level: currentLevel,
+            group: currentLevelGroup
+          });
+
+          // Always save on Next button click, even if level hasn't changed yet
+          // This ensures we capture progress before the transition
+          await savePlayerProgress(progress);
+
+          // Update last saved values
+          lastSavedLevel = currentLevel;
+          lastSavedLevelGroup = currentLevelGroup;
+        } else {
+          log('warn', '⚠️ Не удалось извлечь прогресс после клика на "Далее"');
+        }
+      }, 200);
+    };
+
+    // Monitor for Next button clicks
+    const observer = new MutationObserver(() => {
+      const nextButtons = document.querySelectorAll('button._4e75b');
+
+      nextButtons.forEach(button => {
+        if (button.dataset.progressSaverListener === 'true') return;
+
+        button.dataset.progressSaverListener = 'true';
+        button.addEventListener('click', handleNextButtonClick);
+        log('info', '✅ Добавлен обработчик сохранения к кнопке "Далее"');
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Check for existing buttons
+    const existingButtons = document.querySelectorAll('button._4e75b');
+    existingButtons.forEach(button => {
+      if (button.dataset.progressSaverListener === 'true') return;
+
+      button.dataset.progressSaverListener = 'true';
+      button.addEventListener('click', handleNextButtonClick);
+      log('info', '✅ Добавлен обработчик сохранения к существующей кнопке "Далее"');
+    });
+
+    log('info', '✅ Мониторинг кнопок "Далее" настроен');
+  }
+
+  /**
    * Initialize the progress saver
    */
   async function initialize() {
     log('info', '🚀 ========== ИНИЦИАЛИЗАЦИЯ PLAYER PROGRESS SAVER ==========');
-    log('info', '📋 Версия: Player Progress Saver v1.0');
+    log('info', '📋 Версия: Player Progress Saver v1.1');
     log('info', '🌐 User Agent: ' + navigator.userAgent);
     log('info', '📍 URL: ' + window.location.href);
 
@@ -333,6 +396,7 @@
     monitorLevelChanges();
     watchForLevelScreen();
     listenToStorageEvents();
+    setupNextButtonMonitoring();
 
     // Try to load initial progress
     const initialProgress = extractProgressFromState();
