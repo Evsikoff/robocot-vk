@@ -5,9 +5,18 @@
 (function() {
   'use strict';
 
-  // Debug logging
-  function debugLog(message, data) {
-    console.log('[VK Bridge Integration]', message, data || '');
+  // Enhanced logging with different levels
+  function debugLog(level, message, data) {
+    const timestamp = new Date().toISOString();
+    const prefix = `[VK Bridge Integration][${timestamp}][${level.toUpperCase()}]`;
+
+    if (level === 'error') {
+      console.error(prefix, message, data || '');
+    } else if (level === 'warn') {
+      console.warn(prefix, message, data || '');
+    } else {
+      console.log(prefix, message, data || '');
+    }
   }
 
   // Global VK Bridge wrapper
@@ -22,22 +31,25 @@
     async init() {
       try {
         if (this.initialized) {
-          debugLog('Already initialized');
+          debugLog('info', 'Already initialized');
           return true;
         }
 
         if (typeof vkBridge === 'undefined') {
-          debugLog('VK Bridge not loaded');
+          debugLog('error', 'VK Bridge not loaded');
           return false;
         }
 
-        debugLog('Initializing VK Bridge');
+        debugLog('info', 'Initializing VK Bridge');
         await vkBridge.send('VKWebAppInit');
         this.initialized = true;
-        debugLog('VK Bridge initialized successfully');
+        debugLog('info', 'VK Bridge initialized successfully');
         return true;
       } catch (error) {
-        debugLog('Failed to initialize VK Bridge:', error);
+        debugLog('error', 'Failed to initialize VK Bridge', {
+          error: error.message,
+          stack: error.stack
+        });
         return false;
       }
     },
@@ -48,31 +60,47 @@
      * @returns {Promise<string|null>} Stored value or null
      */
     async storageGet(key) {
+      const startTime = performance.now();
       try {
         if (!this.initialized) {
           await this.init();
         }
 
         if (!this.initialized) {
-          debugLog('Cannot get from storage - not initialized');
+          debugLog('error', 'Cannot get from storage - not initialized', { key });
           return null;
         }
 
-        debugLog('Getting from VK Storage:', key);
+        debugLog('info', 'VK Storage GET request', { key });
         const result = await vkBridge.send('VKWebAppStorageGet', {
           keys: [key]
         });
 
+        const duration = (performance.now() - startTime).toFixed(2);
+
         if (result && result.keys && result.keys.length > 0) {
           const value = result.keys[0].value;
-          debugLog('Got from VK Storage:', { key, value });
+          debugLog('info', 'VK Storage GET success', {
+            key,
+            valueLength: value ? value.length : 0,
+            duration: `${duration}ms`
+          });
           return value;
         }
 
-        debugLog('No value in VK Storage for key:', key);
+        debugLog('warn', 'VK Storage GET returned no value', {
+          key,
+          duration: `${duration}ms`
+        });
         return null;
       } catch (error) {
-        debugLog('Error getting from VK Storage:', error);
+        const duration = (performance.now() - startTime).toFixed(2);
+        debugLog('error', 'VK Storage GET failed', {
+          key,
+          error: error.message,
+          stack: error.stack,
+          duration: `${duration}ms`
+        });
         return null;
       }
     },
@@ -84,26 +112,44 @@
      * @returns {Promise<boolean>} Success status
      */
     async storageSet(key, value) {
+      const startTime = performance.now();
       try {
         if (!this.initialized) {
           await this.init();
         }
 
         if (!this.initialized) {
-          debugLog('Cannot set to storage - not initialized');
+          debugLog('error', 'Cannot set to storage - not initialized', { key });
           return false;
         }
 
-        debugLog('Setting to VK Storage:', { key, value });
-        await vkBridge.send('VKWebAppStorageSet', {
-          key: key,
-          value: String(value)
+        const stringValue = String(value);
+        debugLog('info', 'VK Storage SET request', {
+          key,
+          valueLength: stringValue.length
         });
 
-        debugLog('Successfully set to VK Storage:', key);
+        await vkBridge.send('VKWebAppStorageSet', {
+          key: key,
+          value: stringValue
+        });
+
+        const duration = (performance.now() - startTime).toFixed(2);
+        debugLog('info', 'VK Storage SET success', {
+          key,
+          valueLength: stringValue.length,
+          duration: `${duration}ms`
+        });
         return true;
       } catch (error) {
-        debugLog('Error setting to VK Storage:', error);
+        const duration = (performance.now() - startTime).toFixed(2);
+        debugLog('error', 'VK Storage SET failed', {
+          key,
+          valueLength: value ? String(value).length : 0,
+          error: error.message,
+          stack: error.stack,
+          duration: `${duration}ms`
+        });
         return false;
       }
     },
@@ -114,32 +160,54 @@
      * @returns {Promise<Object>} Object with key-value pairs
      */
     async storageGetMultiple(keys) {
+      const startTime = performance.now();
       try {
         if (!this.initialized) {
           await this.init();
         }
 
         if (!this.initialized) {
-          debugLog('Cannot get from storage - not initialized');
+          debugLog('error', 'Cannot get from storage - not initialized', {
+            keysCount: keys.length
+          });
           return {};
         }
 
-        debugLog('Getting multiple from VK Storage:', keys);
+        debugLog('info', 'VK Storage GET MULTIPLE request', {
+          keys,
+          keysCount: keys.length
+        });
+
         const result = await vkBridge.send('VKWebAppStorageGet', {
           keys: keys
         });
 
         const data = {};
+        let totalValueLength = 0;
         if (result && result.keys) {
           result.keys.forEach(item => {
             data[item.key] = item.value;
+            totalValueLength += item.value ? item.value.length : 0;
           });
         }
 
-        debugLog('Got multiple from VK Storage:', data);
+        const duration = (performance.now() - startTime).toFixed(2);
+        debugLog('info', 'VK Storage GET MULTIPLE success', {
+          requestedKeys: keys.length,
+          returnedKeys: Object.keys(data).length,
+          totalValueLength,
+          duration: `${duration}ms`
+        });
         return data;
       } catch (error) {
-        debugLog('Error getting multiple from VK Storage:', error);
+        const duration = (performance.now() - startTime).toFixed(2);
+        debugLog('error', 'VK Storage GET MULTIPLE failed', {
+          keys,
+          keysCount: keys.length,
+          error: error.message,
+          stack: error.stack,
+          duration: `${duration}ms`
+        });
         return {};
       }
     },
@@ -151,7 +219,7 @@
     async initAds() {
       try {
         if (this.adsInitialized) {
-          debugLog('Ads already initialized');
+          debugLog('info', 'Ads already initialized');
           return true;
         }
 
@@ -160,20 +228,23 @@
         }
 
         if (!this.initialized) {
-          debugLog('Cannot init ads - VK Bridge not initialized');
+          debugLog('error', 'Cannot init ads - VK Bridge not initialized');
           return false;
         }
 
-        debugLog('Checking native ads availability');
+        debugLog('info', 'Checking native ads availability');
         const result = await vkBridge.send('VKWebAppCheckNativeAds', {
           ad_format: 'reward' // Реклама за вознаграждение
         });
 
-        debugLog('Native ads check result:', result);
+        debugLog('info', 'Native ads check result', result);
         this.adsInitialized = result && result.result;
         return this.adsInitialized;
       } catch (error) {
-        debugLog('Error checking native ads:', error);
+        debugLog('error', 'Error checking native ads', {
+          error: error.message,
+          stack: error.stack
+        });
         return false;
       }
     },
@@ -189,19 +260,22 @@
         }
 
         if (!this.initialized) {
-          debugLog('Cannot show ad - VK Bridge not initialized');
+          debugLog('error', 'Cannot show ad - VK Bridge not initialized');
           return false;
         }
 
-        debugLog('Showing interstitial ad');
+        debugLog('info', 'Showing interstitial ad');
         const result = await vkBridge.send('VKWebAppShowNativeAds', {
           ad_format: 'interstitial'
         });
 
-        debugLog('Interstitial ad result:', result);
+        debugLog('info', 'Interstitial ad result', result);
         return result && result.result;
       } catch (error) {
-        debugLog('Error showing interstitial ad:', error);
+        debugLog('error', 'Error showing interstitial ad', {
+          error: error.message,
+          stack: error.stack
+        });
         return false;
       }
     },
@@ -217,19 +291,22 @@
         }
 
         if (!this.initialized) {
-          debugLog('Cannot show ad - VK Bridge not initialized');
+          debugLog('error', 'Cannot show ad - VK Bridge not initialized');
           return false;
         }
 
-        debugLog('Showing reward ad');
+        debugLog('info', 'Showing reward ad');
         const result = await vkBridge.send('VKWebAppShowNativeAds', {
           ad_format: 'reward'
         });
 
-        debugLog('Reward ad result:', result);
+        debugLog('info', 'Reward ad result', result);
         return result && result.result;
       } catch (error) {
-        debugLog('Error showing reward ad:', error);
+        debugLog('error', 'Error showing reward ad', {
+          error: error.message,
+          stack: error.stack
+        });
         return false;
       }
     }
@@ -238,20 +315,20 @@
   // Auto-initialize when script loads
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-      debugLog('DOM loaded, initializing VK Bridge');
+      debugLog('info', 'DOM loaded, initializing VK Bridge');
       window.VKBridgeWrapper.init().then(function(success) {
         if (success) {
-          debugLog('VK Bridge ready');
+          debugLog('info', 'VK Bridge ready');
           // Preload ads after initialization
           window.VKBridgeWrapper.initAds();
         }
       });
     });
   } else {
-    debugLog('DOM already loaded, initializing VK Bridge');
+    debugLog('info', 'DOM already loaded, initializing VK Bridge');
     window.VKBridgeWrapper.init().then(function(success) {
       if (success) {
-        debugLog('VK Bridge ready');
+        debugLog('info', 'VK Bridge ready');
         // Preload ads after initialization
         window.VKBridgeWrapper.initAds();
       }
