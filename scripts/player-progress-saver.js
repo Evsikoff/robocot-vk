@@ -151,6 +151,7 @@
               currentLevel: gameState.currentLevel,
               currentLevelGroup: gameState.currentLevelGroup,
               completedLevels: gameState.completedLevels || state.app?.completedLevels,
+              levelGroups: gameState.levelGroups,
               timestamp: new Date().toISOString()
             };
           }
@@ -165,6 +166,7 @@
                   currentLevel: nestedGame.currentLevel,
                   currentLevelGroup: nestedGame.currentLevelGroup,
                   completedLevels: nestedGame.completedLevels,
+                  levelGroups: nestedGame.levelGroups,
                   timestamp: new Date().toISOString()
                 };
               }
@@ -179,6 +181,74 @@
     } catch (error) {
       log('error', '❌ Ошибка при извлечении прогресса из состояния', {
         error: error.message
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Calculate next level based on current level and levelGroups structure
+   * This mirrors the logic from the game's next() function in dac11.js:3822-3839
+   */
+  function calculateNextLevel(currentLevel, currentLevelGroup, levelGroups) {
+    try {
+      if (!levelGroups || !Array.isArray(levelGroups)) {
+        log('warn', '⚠️ levelGroups не найдены или имеют неверный формат');
+        return null;
+      }
+
+      // Filter out custom levels (same as game logic)
+      const nonCustomGroups = levelGroups.filter(group => !group.isCustom);
+
+      if (nonCustomGroups.length === 0) {
+        log('warn', '⚠️ Не найдено ни одной не-пользовательской группы уровней');
+        return null;
+      }
+
+      // Find current group in non-custom groups
+      const currentGroupInFiltered = nonCustomGroups.indexOf(levelGroups[currentLevelGroup]);
+
+      if (currentGroupInFiltered === -1) {
+        log('warn', '⚠️ Текущая группа уровней не найдена в отфильтрованном списке');
+        return null;
+      }
+
+      const currentGroupLevels = nonCustomGroups[currentGroupInFiltered].levels;
+      const currentGroupIndexInAll = levelGroups.indexOf(nonCustomGroups[currentGroupInFiltered]);
+
+      // Check if there's a next level in the current group
+      if (currentLevel + 1 < currentGroupLevels.length) {
+        // Move to next level in same group
+        log('info', '➡️ Переход на следующий уровень в той же группе', {
+          nextLevel: currentLevel + 1,
+          nextGroup: currentGroupIndexInAll
+        });
+        return {
+          nextLevel: currentLevel + 1,
+          nextLevelGroup: currentGroupIndexInAll
+        };
+      }
+      // Check if there's a next group
+      else if (currentGroupInFiltered + 1 < nonCustomGroups.length) {
+        // Move to first level of next group
+        const nextGroupIndexInAll = levelGroups.indexOf(nonCustomGroups[currentGroupInFiltered + 1]);
+        log('info', '➡️ Переход на первый уровень следующей группы', {
+          nextLevel: 0,
+          nextGroup: nextGroupIndexInAll
+        });
+        return {
+          nextLevel: 0,
+          nextLevelGroup: nextGroupIndexInAll
+        };
+      }
+
+      // This is the last level
+      log('info', '🏁 Это последний уровень в игре');
+      return null;
+    } catch (error) {
+      log('error', '❌ Ошибка при вычислении следующего уровня', {
+        error: error.message,
+        stack: error.stack
       });
       return null;
     }
@@ -308,29 +378,55 @@
     const handleNextButtonClick = async () => {
       log('info', '🖱️ Обнаружен клик на кнопку "Далее"');
 
-      // Small delay to allow state to update after click
-      setTimeout(async () => {
-        const progress = extractProgressFromState();
+      // Extract current state immediately
+      const currentProgress = extractProgressFromState();
 
-        if (progress && progress.currentLevel !== undefined) {
-          const { currentLevel, currentLevelGroup } = progress;
+      if (!currentProgress || currentProgress.currentLevel === undefined) {
+        log('warn', '⚠️ Не удалось извлечь текущий прогресс при клике на "Далее"');
+        return;
+      }
 
-          log('info', '💾 Сохранение прогресса после клика на "Далее"', {
-            level: currentLevel,
-            group: currentLevelGroup
-          });
+      const { currentLevel, currentLevelGroup, levelGroups, completedLevels } = currentProgress;
 
-          // Always save on Next button click, even if level hasn't changed yet
-          // This ensures we capture progress before the transition
-          await savePlayerProgress(progress);
+      log('info', '📊 Текущее состояние перед кликом на "Далее"', {
+        currentLevel,
+        currentLevelGroup,
+        hasLevelGroups: !!levelGroups
+      });
 
-          // Update last saved values
-          lastSavedLevel = currentLevel;
-          lastSavedLevelGroup = currentLevelGroup;
-        } else {
-          log('warn', '⚠️ Не удалось извлечь прогресс после клика на "Далее"');
-        }
-      }, 200);
+      // Calculate next level using the game's logic
+      const nextLevelInfo = calculateNextLevel(currentLevel, currentLevelGroup, levelGroups);
+
+      if (!nextLevelInfo) {
+        log('info', '🏁 Достигнут последний уровень или не удалось вычислить следующий');
+        // Still save current progress
+        await savePlayerProgress(currentProgress);
+        lastSavedLevel = currentLevel;
+        lastSavedLevelGroup = currentLevelGroup;
+        return;
+      }
+
+      const { nextLevel, nextLevelGroup } = nextLevelInfo;
+
+      // Create progress object for the next level
+      const nextProgress = {
+        currentLevel: nextLevel,
+        currentLevelGroup: nextLevelGroup,
+        completedLevels: completedLevels,
+        timestamp: new Date().toISOString()
+      };
+
+      log('info', '💾 Сохранение прогресса для следующего уровня', {
+        nextLevel,
+        nextLevelGroup
+      });
+
+      // Save progress for the next level
+      await savePlayerProgress(nextProgress);
+
+      // Update last saved values
+      lastSavedLevel = nextLevel;
+      lastSavedLevelGroup = nextLevelGroup;
     };
 
     // Monitor for Next button clicks
