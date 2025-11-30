@@ -28,6 +28,20 @@
   // Keep a snapshot of the last successfully extracted progress
   let lastKnownProgress = null;
 
+  // Track the last level start we logged to avoid duplicates
+  let lastLoggedLevelStart = { level: null, group: null };
+
+  function logLevelStartIfNew(level, group) {
+    if (level === undefined || level === null) return;
+
+    const isSameLevel = level === lastLoggedLevelStart.level && group === lastLoggedLevelStart.group;
+
+    if (!isSameLevel) {
+      log('info', '🎯 Игрок начал уровень', { level, group });
+      lastLoggedLevelStart = { level, group };
+    }
+  }
+
   /**
    * Save player progress to both VK Storage and localStorage
    */
@@ -397,6 +411,8 @@
                 group: currentLevelGroup
               });
 
+              logLevelStartIfNew(currentLevel, currentLevelGroup);
+
               lastSavedLevel = currentLevel;
               lastSavedLevelGroup = currentLevelGroup;
 
@@ -450,6 +466,8 @@
               group: currentLevelGroup
             });
 
+            logLevelStartIfNew(currentLevel, currentLevelGroup);
+
             lastSavedLevel = currentLevel;
             lastSavedLevelGroup = currentLevelGroup;
 
@@ -484,6 +502,7 @@
           if (progress) {
             const { currentLevel, currentLevelGroup } = progress;
             if (currentLevel !== lastSavedLevel || currentLevelGroup !== lastSavedLevelGroup) {
+              logLevelStartIfNew(currentLevel, currentLevelGroup);
               lastSavedLevel = currentLevel;
               lastSavedLevelGroup = currentLevelGroup;
               savePlayerProgress(progress);
@@ -659,6 +678,7 @@
       lastSavedLevel = initialProgress.currentLevel;
       lastSavedLevelGroup = initialProgress.currentLevelGroup;
       lastKnownProgress = initialProgress;
+      logLevelStartIfNew(initialProgress.currentLevel, initialProgress.currentLevelGroup);
       log('info', '📊 Начальный прогресс:', {
         level: lastSavedLevel,
         group: lastSavedLevelGroup
