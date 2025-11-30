@@ -396,11 +396,11 @@
         setTimeout(() => {
           const progress = extractProgressFromState();
 
-          if (progress && progress.currentLevel !== undefined) {
-            const { currentLevel, currentLevelGroup } = progress;
+            if (progress && progress.currentLevel !== undefined) {
+              const { currentLevel, currentLevelGroup } = progress;
 
-            // Check if this is a new level
-            if (currentLevel !== lastSavedLevel || currentLevelGroup !== lastSavedLevelGroup) {
+              // Check if this is a new level
+              if (currentLevel !== lastSavedLevel || currentLevelGroup !== lastSavedLevelGroup) {
               log('info', '🎮 ========== ОБНАРУЖЕН ПЕРЕХОД НА НОВЫЙ УРОВЕНЬ ==========');
               log('info', '📍 Предыдущий уровень:', {
                 level: lastSavedLevel,
