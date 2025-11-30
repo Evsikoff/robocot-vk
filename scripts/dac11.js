@@ -3736,7 +3736,6 @@
                             window.removeEventListener("vk-storage-progress", e)
                         }
                     }, []);
-                    var u = !!(l && null != l.currentLevel);
                     return o.a.createElement(Qa.Transition, {
                         in: t,
                         timeout: 1e3,
@@ -3780,7 +3779,7 @@
                                 virtualPageURL: "/startscreen/" + "startgamebutton"
                             }), n(!1)
                         }
-                    }, o.a.createElement("span", null, f()("startScreen.button")), o.a.createElement(Ua, null)), u && o.a.createElement("button", {
+                    }, o.a.createElement("span", null, f()("startScreen.button")), o.a.createElement(Ua, null)), u ? o.a.createElement("button", {
                         className: Xa.a.button,
                         onClick: function() {
                             g({
@@ -3805,14 +3804,14 @@
                         height: "6",
                         width: "10",
                         x: "7",
-                        y: "14"
+                        y: "14",
                     }), o.a.createElement("path", {
                         d: "M14 3h2v4h-2z",
                         strokeWidth: "1.2"
                     }), o.a.createElement("path", {
                         d: "M12 16v2",
                         strokeWidth: "1.2"
-                    })))), o.a.createElement(Ya, {
+                    })))) : null), o.a.createElement(Ya, {
                         className: Xa.a.biip
                     }))))
                 };
