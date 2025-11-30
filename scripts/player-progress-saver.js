@@ -530,6 +530,7 @@
 
         if (lastKnownProgress) {
           log('info', 'ℹ️ Используем последний известный снимок прогресса');
+          logLevelStartIfNew(lastKnownProgress.currentLevel, lastKnownProgress.currentLevelGroup);
           currentProgress = { ...lastKnownProgress };
         } else if (lastSavedLevel !== null || lastSavedLevelGroup !== null) {
           log('info', 'ℹ️ Используем последний успешно сохраненный прогресс');
@@ -594,6 +595,7 @@
         timestamp: new Date().toISOString()
       };
 
+      logLevelStartIfNew(nextLevel, nextLevelGroup);
       log('info', '💾 Сохранение прогресса для следующего уровня', {
         nextLevel,
         nextLevelGroup
