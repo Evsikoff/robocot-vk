@@ -3720,7 +3720,23 @@
                         n = e.setStart,
                         r = e.onEnterComplete,
                         a = e.showEnterAnimation,
-                        i = null;
+                        i = null,
+                        s = Object(o.a.useState)(null),
+                        l = s[0],
+                        c = s[1];
+                    Object(o.a.useEffect)(function() {
+                        var e = function(e) {
+                            var t = e.detail || {},
+                                n = t.currentLevel;
+                            null != n && c(t)
+                        };
+                        return window.addEventListener("vk-storage-progress", e), window.gameStorage && window.gameStorage.lastLevelInfoFromVK && e({
+                            detail: window.gameStorage.lastLevelInfoFromVK
+                        }), function() {
+                            window.removeEventListener("vk-storage-progress", e)
+                        }
+                    }, []);
+                    var u = !!(l && null != l.currentLevel);
                     return o.a.createElement(Qa.Transition, {
                         in: t,
                         timeout: 1e3,
@@ -3764,7 +3780,39 @@
                                 virtualPageURL: "/startscreen/" + "startgamebutton"
                             }), n(!1)
                         }
-                    }, o.a.createElement("span", null, f()("startScreen.button")), o.a.createElement(Ua, null))), o.a.createElement(Ya, {
+                    }, o.a.createElement("span", null, f()("startScreen.button")), o.a.createElement(Ua, null)), u && o.a.createElement("button", {
+                        className: Xa.a.button,
+                        onClick: function() {
+                            g({
+                                event: "VirtualPageview",
+                                virtualPageURL: "/startscreen/" + "continuegamebutton"
+                            }), n(!1)
+                        }
+                    }, o.a.createElement("span", null, f()("startScreen.continueButton")), o.a.createElement("svg", {
+                        height: "24",
+                        viewBox: "0 0 24 24",
+                        width: "24",
+                        xmlns: "http://www.w3.org/2000/svg"
+                    }, o.a.createElement("g", {
+                        fill: "none",
+                        stroke: "#ff003a"
+                    }, o.a.createElement("path", {
+                        d: "M5 3h11l4 4v14H5z"
+                    }), o.a.createElement("path", {
+                        d: "M9 3v6h6V3",
+                        strokeWidth: "1.2"
+                    }), o.a.createElement("rect", {
+                        height: "6",
+                        width: "10",
+                        x: "7",
+                        y: "14"
+                    }), o.a.createElement("path", {
+                        d: "M14 3h2v4h-2z",
+                        strokeWidth: "1.2"
+                    }), o.a.createElement("path", {
+                        d: "M12 16v2",
+                        strokeWidth: "1.2"
+                    })))), o.a.createElement(Ya, {
                         className: Xa.a.biip
                     }))))
                 };
@@ -4499,7 +4547,8 @@
                     title: "Помоги Biip добраться домой с помощью кода!",
                     lead: " Fra 15. sept.- 1. des. arrangerer <br>Equinor Morgenendagens Helter <br>i samarbeid med 6 vitensentre, <br>kodedager.",
                     link: "Finn nærmeste her",
-                    button: "Начать игру"
+                    button: "Начать игру",
+                    continueButton: "Продолжить игру"
                 },
                 introduction: {
                     body: "Romskipet til Biip har gått tom for strøm. Помощь Biip frem til vindmøllen så han får ladet opp og kommet seg hjem.",
@@ -7827,7 +7876,8 @@
                     title: "Помоги Biip добраться домой с помощью кода!",
                     lead: "Between the 15th Sept. and 1st of Dec. Equinor Morgenendagens Helter is arranging coding events in collaboration with 6 science centers.",
                     link: "Найди ближайший здесь",
-                    button: "Начать игру"
+                    button: "Начать игру",
+                    continueButton: "Продолжить игру"
                 },
                 introduction: {
                     body: "Космический корабль Biip остался без энергии. Помоги Biip добраться до ветротурбины, чтобы зарядить корабль и вернуться домой.",

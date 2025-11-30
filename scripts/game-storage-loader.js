@@ -35,6 +35,63 @@
   // Cache for VK Storage values to avoid repeated async calls
   const vkStorageCache = new Map();
 
+  // Last level information successfully loaded from VK Storage
+  let lastLevelInfoFromVK = null;
+
+  function extractLevelInfo(key, value) {
+    if (!value) {
+      return null;
+    }
+
+    try {
+      if (key === 'playerProgress') {
+        const parsed = JSON.parse(value);
+        if (parsed && (parsed.currentLevel !== undefined || parsed.currentLevelGroup !== undefined)) {
+          return {
+            currentLevel: parsed.currentLevel,
+            currentLevelGroup: parsed.currentLevelGroup
+          };
+        }
+      }
+
+      if (key === 'gameState' || key === 'progress') {
+        const parsed = JSON.parse(value);
+        if (parsed && parsed.game) {
+          const gameState = typeof parsed.game === 'string' ? JSON.parse(parsed.game) : parsed.game;
+          if (gameState && gameState.currentLevel !== undefined) {
+            return {
+              currentLevel: gameState.currentLevel,
+              currentLevelGroup: gameState.currentLevelGroup
+            };
+          }
+        }
+      }
+
+      if (key === 'currentLevel') {
+        return {
+          currentLevel: Number(value)
+        };
+      }
+
+      return null;
+    } catch (error) {
+      log('warn', '⚠️ Не удалось разобрать данные уровня', { key, error: error.message });
+      return null;
+    }
+  }
+
+  function notifyLastLevelFromVK(levelInfo) {
+    if (!levelInfo || levelInfo.currentLevel === undefined || levelInfo.currentLevel === null) {
+      return;
+    }
+
+    lastLevelInfoFromVK = levelInfo;
+    window.gameStorage = window.gameStorage || {};
+    window.gameStorage.lastLevelInfoFromVK = levelInfo;
+
+    window.dispatchEvent(new CustomEvent('vk-storage-progress', { detail: levelInfo }));
+  }
+
   /**
    * Enhanced getItem that tries VK Storage first, then localStorage
    */
@@ -53,6 +110,11 @@
             key,
             valueLength: vkValue.length
           });
+
+          const levelInfo = extractLevelInfo(key, vkValue);
+          if (levelInfo) {
+            notifyLastLevelFromVK(levelInfo);
+          }
 
           // Update cache and localStorage
           vkStorageCache.set(key, vkValue);
@@ -325,7 +387,8 @@
     getItem: enhancedGetItem,
     setItem: enhancedSetItem,
     removeItem: enhancedRemoveItem,
-    loadProgress: loadPlayerProgress
+    loadProgress: loadPlayerProgress,
+    lastLevelInfoFromVK
   };
 
   // Initialize when DOM is ready
