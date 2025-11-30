@@ -3322,49 +3322,27 @@
                     this.props.setGameRunning(!1)
                 }, 
                     t.prototype.componentDidUpdate = function(e) {
-    // 1. Существующие проверки анимаций и видимости
-    e.characterAnimations !== this.props.characterAnimations && this.playCharacterAnimations(),
-    e.visible !== this.props.visible && this.stage.setEnabled(this.props.visible),
-    e.editorModeActive !== this.props.editorModeActive && (this.stage.setEditorModeActive(this.props.editorModeActive), this.stage.animationFactory.newLevel());
-
-    // 2. ПРОВЕРКА СМЕНЫ УРОВНЯ (Здесь добавляем логику VK)
-    if (e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup || e.currentLevelData !== this.props.currentLevelData || this.props.restart && this.props.restart !== e.restart) {
-        
-        // --- НАЧАЛО ВСТАВКИ VK STORAGE ---
-        // Проверяем, что уровень действительно изменился (а не просто рестарт)
-        if (e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup) {
-            try {
-                // Проверяем наличие vkBridge (предполагается, что он подключен глобально)
-                if (window.vkBridge) {
-                    window.vkBridge.send('VKWebAppStorageSet', {
-                        key: 'biip_last_level_data', // Ключ хранилища
-                        value: JSON.stringify({
-                            group: this.props.currentLevelGroup,
-                            level: this.props.currentLevel
-                        })
-                    }).then(function(data) {
-                        console.log('Уровень сохранен в VK Storage', data);
-                    }).catch(function(error) {
-                        console.error('Ошибка сохранения в VK Storage', error);
-                    });
-                }
-            } catch (err) {
-                console.error('VK Bridge error', err);
-            }
-        }
-        // --- КОНЕЦ ВСТАВКИ VK STORAGE ---
-
-        // Оригинальная логика обновления сцены
-        this.setLevelOnStage(this.props.currentLevelData);
-        this.props.setLevelFinished(!1);
-    }
-
-    // 3. Остальной оригинальный код
-    this.props.restart && this.props.restart !== e.restart && this.props.setRestart(!1), 
-    !e.gameRunning && this.props.gameRunning && this.props.programRow.length && this.props.currentLevelData && (xa(this.props.programRow, this.props.currentLevelData, this.props.setCharacterAnimations, this.props.commands).completed && (this.props.setLevelFinished(!0), this.props.setLevelComplete(), this.props.setCompletedLevels(this.props.currentLevelGroup, this.props.currentLevel)))
-}
-                   // t.prototype.componentDidUpdate = function(e) {
-                    // (e.characterAnimations !== this.props.characterAnimations && this.playCharacterAnimations(), e.visible !== this.props.visible && this.stage.setEnabled(this.props.visible), e.editorModeActive !== this.props.editorModeActive && (this.stage.setEditorModeActive(this.props.editorModeActive), this.stage.animationFactory.newLevel()), (e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup || e.currentLevelData !== this.props.currentLevelData || this.props.restart && this.props.restart !== e.restart) && (this.setLevelOnStage(this.props.currentLevelData), this.props.setLevelFinished(!1)), this.props.restart && this.props.restart !== e.restart && this.props.setRestart(!1), !e.gameRunning && this.props.gameRunning && this.props.programRow.length && this.props.currentLevelData) && (xa(this.props.programRow, this.props.currentLevelData, this.props.setCharacterAnimations, this.props.commands).completed && (this.props.setLevelFinished(!0), this.props.setLevelComplete(), this.props.setCompletedLevels(this.props.currentLevelGroup, this.props.currentLevel)))
+                    e.characterAnimations !== this.props.characterAnimations && this.playCharacterAnimations(), e.visible !== this.props.visible && this.stage.setEnabled(this.props.visible), e.editorModeActive !== this.props.editorModeActive && (this.stage.setEditorModeActive(this.props.editorModeActive), this.stage.animationFactory.newLevel());
+                    var t = e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup || e.currentLevelData !== this.props.currentLevelData || this.props.restart && this.props.restart !== e.restart;
+                    if (t) {
+                        if (e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup) try {
+                            window.vkBridge && window.vkBridge.send("VKWebAppStorageSet", {
+                                key: "biip_last_level_data",
+                                value: JSON.stringify({
+                                    group: this.props.currentLevelGroup,
+                                    level: this.props.currentLevel
+                                })
+                            }).then(function(e) {
+                                console.log("Уровень сохранен в VK Storage", e)
+                            }).catch(function(e) {
+                                console.error("Ошибка сохранения в VK Storage", e)
+                            })
+                        } catch (e) {
+                            console.error("VK Bridge error", e)
+                        }
+                        this.setLevelOnStage(this.props.currentLevelData), this.props.setLevelFinished(!1)
+                    }
+                    this.props.restart && this.props.restart !== e.restart && this.props.setRestart(!1), !e.gameRunning && this.props.gameRunning && this.props.programRow.length && this.props.currentLevelData && (xa(this.props.programRow, this.props.currentLevelData, this.props.setCharacterAnimations, this.props.commands).completed && (this.props.setLevelFinished(!0), this.props.setLevelComplete(), this.props.setCompletedLevels(this.props.currentLevelGroup, this.props.currentLevel)))
                 }, t.prototype.render = function() {
                     var e = this,
                         t = L()(cn.a.main, this.props.visible ? cn.a.visible : null);
@@ -4311,20 +4289,28 @@
                             n = e.setStart;
                         t || n(!0)
                     }, t.prototype.componentDidUpdate = function(e) {
-                        var t = this.props,
-                            n = t.gameRunning,
-                            r = t.currentLevel,
-                            a = t.currentLevelGroup,
-                            o = t.displayLevelCompleteDialog,
-                            i = t.displayInstructions,
-                            s = t.game,
-                            l = t.clearProgram,
-                            c = t.setNumCommands,
-                            V = t.instructionsViewed,
-                            u = t.setEditorMode,
-                            p = t.editorModeActive;
-                        e.currentLevel === r && e.currentLevelGroup === a || c(0), !1 === n && !0 === e.gameRunning && !0 === this.props.currentLevelData.finished && !0 === this.props.currentLevelData.completed && !1 === this.props.editorModeActive && (o(!0), l()), e.location.pathname !== this.props.location.pathname && u(this.props.location.pathname === "/" + ve), (e.currentLevelGroup === a || 0 !== r) && e.game === s || -1 !== V.indexOf(a) || p || i(!0)
-                    }, t.prototype.render = function() {
+                    e.characterAnimations !== this.props.characterAnimations && this.playCharacterAnimations(), e.visible !== this.props.visible && this.stage.setEnabled(this.props.visible), e.editorModeActive !== this.props.editorModeActive && (this.stage.setEditorModeActive(this.props.editorModeActive), this.stage.animationFactory.newLevel());
+                    var t = e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup || e.currentLevelData !== this.props.currentLevelData || this.props.restart && this.props.restart !== e.restart;
+                    if (t) {
+                        if (e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup) try {
+                            window.vkBridge && window.vkBridge.send("VKWebAppStorageSet", {
+                                key: "biip_last_level_data",
+                                value: JSON.stringify({
+                                    group: this.props.currentLevelGroup,
+                                    level: this.props.currentLevel
+                                })
+                            }).then(function(e) {
+                                console.log("Уровень сохранен в VK Storage", e)
+                            }).catch(function(e) {
+                                console.error("Ошибка сохранения в VK Storage", e)
+                            })
+                        } catch (e) {
+                            console.error("VK Bridge error", e)
+                        }
+                        this.setLevelOnStage(this.props.currentLevelData), this.props.setLevelFinished(!1)
+                    }
+                    this.props.restart && this.props.restart !== e.restart && this.props.setRestart(!1), !e.gameRunning && this.props.gameRunning && this.props.programRow.length && this.props.currentLevelData && (xa(this.props.programRow, this.props.currentLevelData, this.props.setCharacterAnimations, this.props.commands).completed && (this.props.setLevelFinished(!0), this.props.setLevelComplete(), this.props.setCompletedLevels(this.props.currentLevelGroup, this.props.currentLevel)))
+                }, t.prototype.render = function() {{
                         var e = this,
                             t = this.props,
                             n = t.game,
