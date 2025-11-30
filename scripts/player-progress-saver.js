@@ -25,6 +25,9 @@
   let lastSavedLevelGroup = null;
   let saveInProgress = false;
 
+  // Keep a snapshot of the last successfully extracted progress
+  let lastKnownProgress = null;
+
   /**
    * Save player progress to both VK Storage and localStorage
    */
@@ -36,11 +39,15 @@
 
     saveInProgress = true;
 
+    // Cache snapshot for future fallbacks
+    lastKnownProgress = { ...progressData };
+
     try {
       const {
         currentLevel,
         currentLevelGroup,
         completedLevels,
+        levelGroups,
         timestamp
       } = progressData;
 
@@ -57,6 +64,7 @@
         currentLevel,
         currentLevelGroup,
         completedLevels,
+        levelGroups,
         lastUpdated: timestamp
       };
 
@@ -108,6 +116,10 @@
           localStorage.setItem('completedLevels', JSON.stringify(completedLevels));
         }
 
+        if (levelGroups) {
+          localStorage.setItem('levelGroups', JSON.stringify(levelGroups));
+        }
+
         log('info', '✅ Дополнительные ключи сохранены для совместимости');
       } catch (error) {
         log('warn', '⚠️ Ошибка при сохранении дополнительных ключей', {
@@ -134,7 +146,7 @@
     try {
       // Try to find Redux state in localStorage
       // Common keys: 'persist:root', 'reduxState', 'state'
-      const possibleKeys = ['persist:root', 'reduxState', 'state', 'app'];
+      const possibleKeys = ['persist:root', 'reduxState', 'state', 'app', 'progress', 'gameState'];
 
       for (const key of possibleKeys) {
         const stateJSON = localStorage.getItem(key);
@@ -147,13 +159,14 @@
           const gameState = state.game || state.app?.game || state;
 
           if (gameState && (gameState.currentLevel !== undefined || gameState.currentLevelGroup !== undefined)) {
-            return {
+            lastKnownProgress = {
               currentLevel: gameState.currentLevel,
               currentLevelGroup: gameState.currentLevelGroup,
               completedLevels: gameState.completedLevels || state.app?.completedLevels,
               levelGroups: gameState.levelGroups,
               timestamp: new Date().toISOString()
             };
+            return lastKnownProgress;
           }
         } catch (parseError) {
           // Try parsing nested JSON
@@ -162,19 +175,76 @@
             if (parsed.game) {
               const nestedGame = JSON.parse(parsed.game);
               if (nestedGame.currentLevel !== undefined) {
-                return {
+                lastKnownProgress = {
                   currentLevel: nestedGame.currentLevel,
                   currentLevelGroup: nestedGame.currentLevelGroup,
                   completedLevels: nestedGame.completedLevels,
                   levelGroups: nestedGame.levelGroups,
                   timestamp: new Date().toISOString()
                 };
+                return lastKnownProgress;
               }
             }
           } catch (e) {
             // Ignore
           }
         }
+      }
+
+      // Fall back to previously saved progress in localStorage
+      const savedProgress = localStorage.getItem('playerProgress');
+      if (savedProgress) {
+        try {
+          const parsedProgress = JSON.parse(savedProgress);
+          if (parsedProgress.currentLevel !== undefined) {
+            log('info', 'ℹ️ Используем сохраненный в localStorage прогресс как резервный источник');
+            lastKnownProgress = {
+              currentLevel: parsedProgress.currentLevel,
+              currentLevelGroup: parsedProgress.currentLevelGroup,
+              completedLevels: parsedProgress.completedLevels,
+              levelGroups: parsedProgress.levelGroups,
+              timestamp: new Date().toISOString()
+            };
+            return lastKnownProgress;
+          }
+        } catch (e) {
+          log('warn', '⚠️ Не удалось разобрать playerProgress из localStorage', { error: e.message });
+        }
+      }
+
+      // Final fallback to individual keys
+      const fallbackLevel = localStorage.getItem('currentLevel');
+      const fallbackGroup = localStorage.getItem('currentLevelGroup');
+
+      if (fallbackLevel !== null || fallbackGroup !== null) {
+        log('info', 'ℹ️ Используем раздельные ключи прогресса из localStorage');
+        lastKnownProgress = {
+          currentLevel: fallbackLevel !== null ? Number(fallbackLevel) : undefined,
+          currentLevelGroup: fallbackGroup !== null ? Number(fallbackGroup) : undefined,
+          completedLevels: (() => {
+            const raw = localStorage.getItem('completedLevels');
+            if (!raw) return undefined;
+            try {
+              return JSON.parse(raw);
+            } catch (e) {
+              return undefined;
+            }
+          })(),
+          timestamp: new Date().toISOString()
+        };
+        return lastKnownProgress;
+      }
+
+      // Try to read from known global stores
+      const globalProgress = extractProgressFromGlobals();
+      if (globalProgress) {
+        return globalProgress;
+      }
+
+      // Use last known snapshot if available
+      if (lastKnownProgress) {
+        log('info', 'ℹ️ Используем последний успешный снимок прогресса');
+        return lastKnownProgress;
       }
 
       return null;
@@ -184,6 +254,44 @@
       });
       return null;
     }
+  }
+
+  /**
+   * Try to read progress from known global stores
+   */
+  function extractProgressFromGlobals() {
+    try {
+      const possibleStores = [
+        window.store,
+        window.__STORE__,
+        window.__appStore,
+        window.__reduxStore,
+        window.__REDUX_STORE__,
+        window.__GLOBAL_STORE__
+      ];
+
+      for (const store of possibleStores) {
+        if (!store) continue;
+
+        const state = typeof store.getState === 'function' ? store.getState() : store.state || store;
+        const game = state?.game || state?.app?.game || state;
+
+        if (game && (game.currentLevel !== undefined || game.currentLevelGroup !== undefined)) {
+          lastKnownProgress = {
+            currentLevel: game.currentLevel,
+            currentLevelGroup: game.currentLevelGroup,
+            completedLevels: game.completedLevels || state.app?.completedLevels,
+            levelGroups: game.levelGroups,
+            timestamp: new Date().toISOString()
+          };
+          return lastKnownProgress;
+        }
+      }
+    } catch (error) {
+      log('warn', '⚠️ Ошибка при попытке извлечения прогресса из глобальных сторах', { error: error.message });
+    }
+
+    return null;
   }
 
   /**
@@ -267,18 +375,18 @@
       originalSetItem(key, value);
 
       // Check if this is a state update that might contain level info
-      if (key.includes('persist') || key.includes('redux') || key.includes('state') || key.includes('app') || key.includes('game')) {
+      if (key.includes('persist') || key.includes('redux') || key.includes('state') || key.includes('app') || key.includes('game') || key.includes('progress')) {
         log('info', '🔍 Обнаружено обновление состояния', { key });
 
         // Delay extraction to ensure state is fully updated
         setTimeout(() => {
           const progress = extractProgressFromState();
 
-          if (progress && progress.currentLevel !== undefined) {
-            const { currentLevel, currentLevelGroup } = progress;
+            if (progress && progress.currentLevel !== undefined) {
+              const { currentLevel, currentLevelGroup } = progress;
 
-            // Check if this is a new level
-            if (currentLevel !== lastSavedLevel || currentLevelGroup !== lastSavedLevelGroup) {
+              // Check if this is a new level
+              if (currentLevel !== lastSavedLevel || currentLevelGroup !== lastSavedLevelGroup) {
               log('info', '🎮 ========== ОБНАРУЖЕН ПЕРЕХОД НА НОВЫЙ УРОВЕНЬ ==========');
               log('info', '📍 Предыдущий уровень:', {
                 level: lastSavedLevel,
@@ -297,6 +405,23 @@
             }
           }
         }, 100);
+
+        // Try parsing the incoming value immediately to cache best-effort progress
+        try {
+          const parsedValue = JSON.parse(value);
+          const stateCandidate = parsedValue.game ? JSON.parse(parsedValue.game) : parsedValue;
+          if (stateCandidate && (stateCandidate.currentLevel !== undefined || stateCandidate.currentLevelGroup !== undefined)) {
+            lastKnownProgress = {
+              currentLevel: stateCandidate.currentLevel,
+              currentLevelGroup: stateCandidate.currentLevelGroup,
+              completedLevels: stateCandidate.completedLevels,
+              levelGroups: stateCandidate.levelGroups,
+              timestamp: new Date().toISOString()
+            };
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
       }
     };
 
@@ -379,11 +504,44 @@
       log('info', '🖱️ Обнаружен клик на кнопку "Далее"');
 
       // Extract current state immediately
-      const currentProgress = extractProgressFromState();
+      let currentProgress = extractProgressFromState();
 
       if (!currentProgress || currentProgress.currentLevel === undefined) {
         log('warn', '⚠️ Не удалось извлечь текущий прогресс при клике на "Далее"');
-        return;
+
+        if (lastKnownProgress) {
+          log('info', 'ℹ️ Используем последний известный снимок прогресса');
+          currentProgress = { ...lastKnownProgress };
+        } else if (lastSavedLevel !== null || lastSavedLevelGroup !== null) {
+          log('info', 'ℹ️ Используем последний успешно сохраненный прогресс');
+          currentProgress = {
+            currentLevel: lastSavedLevel,
+            currentLevelGroup: lastSavedLevelGroup,
+            completedLevels: (() => {
+              const raw = localStorage.getItem('completedLevels');
+              if (!raw) return undefined;
+              try {
+                return JSON.parse(raw);
+              } catch (e) {
+                return undefined;
+              }
+            })(),
+            levelGroups: (() => {
+              const raw = localStorage.getItem('levelGroups');
+              if (!raw) return undefined;
+              try {
+                return JSON.parse(raw);
+              } catch (e) {
+                return undefined;
+              }
+            })(),
+            timestamp: new Date().toISOString()
+          };
+        }
+
+        if (!currentProgress || currentProgress.currentLevel === undefined) {
+          return;
+        }
       }
 
       const { currentLevel, currentLevelGroup, levelGroups, completedLevels } = currentProgress;
@@ -413,6 +571,7 @@
         currentLevel: nextLevel,
         currentLevelGroup: nextLevelGroup,
         completedLevels: completedLevels,
+        levelGroups,
         timestamp: new Date().toISOString()
       };
 
@@ -499,6 +658,7 @@
     if (initialProgress) {
       lastSavedLevel = initialProgress.currentLevel;
       lastSavedLevelGroup = initialProgress.currentLevelGroup;
+      lastKnownProgress = initialProgress;
       log('info', '📊 Начальный прогресс:', {
         level: lastSavedLevel,
         group: lastSavedLevelGroup
