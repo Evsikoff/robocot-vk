@@ -3307,7 +3307,7 @@
                         }
                     }), t && (Object.setPrototypeOf ? Object.setPrototypeOf(e, t) : e.__proto__ = t)
                 }(t, e), t.prototype.componentDidMount = function() {
-                    this.stage = new va(this.el), this.stage.setEditorModeActive(this.props.editorModeActive), this.setLevelOnStage(this.props.currentLevelData), this.props.setLevelFinished(!1), this.props.clearProgram(), this.props.setGameRunning(!1), this.stage.setEnabled(this.props.visible)
+                    this.stage = new va(this.el), this.stage.setEditorModeActive(this.props.editorModeActive), this.setLevelOnStage(this.props.currentLevelData), this.props.setLevelFinished(!1), this.props.clearProgram(), this.props.setGameRunning(!1), this.stage.setEnabled(this.props.visible), this.saveProgressToVKStorage()
                 }, t.prototype.setLevelOnStage = function() {
                     var e, t, n = this;
                     e = this.props.currentLevelGroup, t = this.props.currentLevel, g({
@@ -3316,12 +3316,26 @@
                     }), this.stage.setLevel(this.props.currentLevelData), this.props.setCommandSelectionRow(this.props.commands.commandsAvailable.filter(function(e) {
                         return -1 !== n.props.currentLevelData.commands.indexOf(e.action)
                     }))
+                }, t.prototype.saveProgressToVKStorage = function() {
+                    var e = window && window.VKBridgeWrapper;
+                    if (e && e.initialized && e.storageSet) try {
+                        var t = {
+                            currentLevel: this.props.currentLevel,
+                            currentLevelGroup: this.props.currentLevelGroup,
+                            completedLevels: this.props.completedLevels,
+                            levelGroups: this.props.levelGroups,
+                            lastUpdated: (new Date).toISOString()
+                        };
+                        e.storageSet("playerProgress", JSON.stringify(t))
+                    } catch (e) {
+                        console.error("[VK Storage] Failed to save player progress on level start", e)
+                    }
                 }, t.prototype.playCharacterAnimations = function() {
                     this.stage.animationFactory.setCharacterAnimations(this.props.characterAnimations, this.onCharacterAnimationsCompleted.bind(this), this.props.editorModeActive)
                 }, t.prototype.onCharacterAnimationsCompleted = function() {
                     this.props.setGameRunning(!1)
                 }, t.prototype.componentDidUpdate = function(e) {
-                    (e.characterAnimations !== this.props.characterAnimations && this.playCharacterAnimations(), e.visible !== this.props.visible && this.stage.setEnabled(this.props.visible), e.editorModeActive !== this.props.editorModeActive && (this.stage.setEditorModeActive(this.props.editorModeActive), this.stage.animationFactory.newLevel()), (e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup || e.currentLevelData !== this.props.currentLevelData || this.props.restart && this.props.restart !== e.restart) && (this.setLevelOnStage(this.props.currentLevelData), this.props.setLevelFinished(!1)), this.props.restart && this.props.restart !== e.restart && this.props.setRestart(!1), !e.gameRunning && this.props.gameRunning && this.props.programRow.length && this.props.currentLevelData) && (xa(this.props.programRow, this.props.currentLevelData, this.props.setCharacterAnimations, this.props.commands).completed && (this.props.setLevelFinished(!0), this.props.setLevelComplete(), this.props.setCompletedLevels(this.props.currentLevelGroup, this.props.currentLevel)))
+                    (e.characterAnimations !== this.props.characterAnimations && this.playCharacterAnimations(), e.visible !== this.props.visible && this.stage.setEnabled(this.props.visible), e.editorModeActive !== this.props.editorModeActive && (this.stage.setEditorModeActive(this.props.editorModeActive), this.stage.animationFactory.newLevel()), (e.currentLevel !== this.props.currentLevel || e.currentLevelGroup !== this.props.currentLevelGroup || e.currentLevelData !== this.props.currentLevelData || this.props.restart && this.props.restart !== e.restart) && (this.setLevelOnStage(this.props.currentLevelData), this.props.setLevelFinished(!1), this.saveProgressToVKStorage()), this.props.restart && this.props.restart !== e.restart && this.props.setRestart(!1), !e.gameRunning && this.props.gameRunning && this.props.programRow.length && this.props.currentLevelData) && (xa(this.props.programRow, this.props.currentLevelData, this.props.setCharacterAnimations, this.props.commands).completed && (this.props.setLevelFinished(!0), this.props.setLevelComplete(), this.props.setCompletedLevels(this.props.currentLevelGroup, this.props.currentLevel)))
                 }, t.prototype.render = function() {
                     var e = this,
                         t = L()(cn.a.main, this.props.visible ? cn.a.visible : null);
@@ -3351,6 +3365,8 @@
                 visible: p.bool,
                 restart: p.bool,
                 setCompletedLevels: p.func,
+                completedLevels: p.object,
+                levelGroups: p.array,
                 editorModeActive: p.bool
             };
             var Oa = Object(s.b)(function(e) {
@@ -3362,7 +3378,9 @@
                         gameRunning: e.game.gameRunning,
                         restart: e.game.restart,
                         programRow: e.commands.programRow,
-                        commands: e.commands
+                        commands: e.commands,
+                        completedLevels: e.app.completedLevels,
+                        levelGroups: e.game.levelGroups
                     }
                 }, {
                     setLevel: q.u,
