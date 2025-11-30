@@ -41,6 +41,7 @@
         currentLevel,
         currentLevelGroup,
         completedLevels,
+        levelGroups,
         timestamp
       } = progressData;
 
@@ -57,6 +58,7 @@
         currentLevel,
         currentLevelGroup,
         completedLevels,
+        levelGroups,
         lastUpdated: timestamp
       };
 
@@ -106,6 +108,10 @@
 
         if (completedLevels) {
           localStorage.setItem('completedLevels', JSON.stringify(completedLevels));
+        }
+
+        if (levelGroups) {
+          localStorage.setItem('levelGroups', JSON.stringify(levelGroups));
         }
 
         log('info', '✅ Дополнительные ключи сохранены для совместимости');
@@ -175,6 +181,48 @@
             // Ignore
           }
         }
+      }
+
+      // Fall back to previously saved progress in localStorage
+      const savedProgress = localStorage.getItem('playerProgress');
+      if (savedProgress) {
+        try {
+          const parsedProgress = JSON.parse(savedProgress);
+          if (parsedProgress.currentLevel !== undefined) {
+            log('info', 'ℹ️ Используем сохраненный в localStorage прогресс как резервный источник');
+            return {
+              currentLevel: parsedProgress.currentLevel,
+              currentLevelGroup: parsedProgress.currentLevelGroup,
+              completedLevels: parsedProgress.completedLevels,
+              levelGroups: parsedProgress.levelGroups,
+              timestamp: new Date().toISOString()
+            };
+          }
+        } catch (e) {
+          log('warn', '⚠️ Не удалось разобрать playerProgress из localStorage', { error: e.message });
+        }
+      }
+
+      // Final fallback to individual keys
+      const fallbackLevel = localStorage.getItem('currentLevel');
+      const fallbackGroup = localStorage.getItem('currentLevelGroup');
+
+      if (fallbackLevel !== null || fallbackGroup !== null) {
+        log('info', 'ℹ️ Используем раздельные ключи прогресса из localStorage');
+        return {
+          currentLevel: fallbackLevel !== null ? Number(fallbackLevel) : undefined,
+          currentLevelGroup: fallbackGroup !== null ? Number(fallbackGroup) : undefined,
+          completedLevels: (() => {
+            const raw = localStorage.getItem('completedLevels');
+            if (!raw) return undefined;
+            try {
+              return JSON.parse(raw);
+            } catch (e) {
+              return undefined;
+            }
+          })(),
+          timestamp: new Date().toISOString()
+        };
       }
 
       return null;
@@ -379,11 +427,41 @@
       log('info', '🖱️ Обнаружен клик на кнопку "Далее"');
 
       // Extract current state immediately
-      const currentProgress = extractProgressFromState();
+      let currentProgress = extractProgressFromState();
 
       if (!currentProgress || currentProgress.currentLevel === undefined) {
         log('warn', '⚠️ Не удалось извлечь текущий прогресс при клике на "Далее"');
-        return;
+
+        if (lastSavedLevel !== null || lastSavedLevelGroup !== null) {
+          log('info', 'ℹ️ Используем последний успешно сохраненный прогресс');
+          currentProgress = {
+            currentLevel: lastSavedLevel,
+            currentLevelGroup: lastSavedLevelGroup,
+            completedLevels: (() => {
+              const raw = localStorage.getItem('completedLevels');
+              if (!raw) return undefined;
+              try {
+                return JSON.parse(raw);
+              } catch (e) {
+                return undefined;
+              }
+            })(),
+            levelGroups: (() => {
+              const raw = localStorage.getItem('levelGroups');
+              if (!raw) return undefined;
+              try {
+                return JSON.parse(raw);
+              } catch (e) {
+                return undefined;
+              }
+            })(),
+            timestamp: new Date().toISOString()
+          };
+        }
+
+        if (!currentProgress || currentProgress.currentLevel === undefined) {
+          return;
+        }
       }
 
       const { currentLevel, currentLevelGroup, levelGroups, completedLevels } = currentProgress;
@@ -413,6 +491,7 @@
         currentLevel: nextLevel,
         currentLevelGroup: nextLevelGroup,
         completedLevels: completedLevels,
+        levelGroups,
         timestamp: new Date().toISOString()
       };
 
