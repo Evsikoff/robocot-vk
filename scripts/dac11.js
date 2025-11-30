@@ -3716,106 +3716,113 @@
                     }), "in" === n ? a.staggerFrom(e.children, o, i, .15) : "out" === n && a.staggerTo(e.children, o, i, .15)
                 }),
                 Za = function(e) {
-                    var t = e.start,
-                        n = e.setStart,
-                        r = e.onEnterComplete,
-                        a = e.showEnterAnimation,
-                        i = null,
-                        s = Object(o.a.useState)(null),
-                        l = s[0],
-                        c = s[1];
-                    Object(o.a.useEffect)(function() {
-                        var e = function(e) {
-                            var t = e.detail || {},
-                                n = t.currentLevel;
-                            null != n && c(t)
-                        };
-                        return window.addEventListener("vk-storage-progress", e), window.gameStorage && window.gameStorage.lastLevelInfoFromVK && e({
+                    function t(t) {
+                        var n;
+                        return (n = e.call(this, t) || this).state = {
+                            lastLevelInfo: null
+                        }, n.handleVkProgress = n.handleVkProgress.bind(n), n
+                    }
+                    return t.__proto__ = e, t.prototype = Object.create(e.prototype), t.prototype.constructor = t, t.prototype.handleVkProgress = function(e) {
+                        var t = e.detail || {},
+                            n = t.currentLevel;
+                        null != n && this.setState({
+                            lastLevelInfo: t
+                        })
+                    }, t.prototype.componentDidMount = function() {
+                        window.addEventListener("vk-storage-progress", this.handleVkProgress), window.gameStorage && window.gameStorage.lastLevelInfoFromVK && this.handleVkProgress({
                             detail: window.gameStorage.lastLevelInfoFromVK
-                        }), function() {
-                            window.removeEventListener("vk-storage-progress", e)
-                        }
-                    }, []);
-                    return o.a.createElement(Qa.Transition, {
-                        in: t,
-                        timeout: 1e3,
-                        mountOnEnter: !0,
-                        unmountOnExit: !0,
-                        onEnter: function() {
-                            return Ja(i, 1, "in", r)
-                        },
-                        onExit: function() {
-                            return Ja(i, 1, "out")
-                        },
-                        enter: a
-                    }, o.a.createElement("div", {
-                        ref: function(e) {
-                            return i = e
-                        },
-                        className: Xa.a.main
-                    }, o.a.createElement("div", {
-                        className: Xa.a.inner
-                    }, o.a.createElement("div", {
-                        className: Xa.a.info
-                    }, o.a.createElement("span", {
-                        dangerouslySetInnerHTML: {
-                            __html: _a(["Equinor", "Morgenendagens", "kodedager", "Helter", "Vitenfabrikken"], f()("startScreen.lead"))
-                        }
-                    }), " ", o.a.createElement("span", {
-                        className: Xa.a.link
-                    }, o.a.createElement(T.a, {
-                        to: "/kodedager"
-                    }, f()("startScreen.link")))), o.a.createElement("div", {
-                        className: Xa.a.game
-                    }, o.a.createElement("h1", {
-                        dangerouslySetInnerHTML: {
-                            __html: _a(["Biip"], f()("startScreen.title"))
-                        }
-                    }), o.a.createElement("button", {
-                        className: Xa.a.button,
-                        onClick: function() {
-                            g({
-                                event: "VirtualPageview",
-                                virtualPageURL: "/startscreen/" + "startgamebutton"
-                            }), n(!1)
-                        }
-                    }, o.a.createElement("span", null, f()("startScreen.button")), o.a.createElement(Ua, null)), u ? o.a.createElement("button", {
-                        className: Xa.a.button,
-                        onClick: function() {
-                            g({
-                                event: "VirtualPageview",
-                                virtualPageURL: "/startscreen/" + "continuegamebutton"
-                            }), n(!1)
-                        }
-                    }, o.a.createElement("span", null, f()("startScreen.continueButton")), o.a.createElement("svg", {
-                        height: "24",
-                        viewBox: "0 0 24 24",
-                        width: "24",
-                        xmlns: "http://www.w3.org/2000/svg"
-                    }, o.a.createElement("g", {
-                        fill: "none",
-                        stroke: "#ff003a"
-                    }, o.a.createElement("path", {
-                        d: "M5 3h11l4 4v14H5z"
-                    }), o.a.createElement("path", {
-                        d: "M9 3v6h6V3",
-                        strokeWidth: "1.2"
-                    }), o.a.createElement("rect", {
-                        height: "6",
-                        width: "10",
-                        x: "7",
-                        y: "14",
-                    }), o.a.createElement("path", {
-                        d: "M14 3h2v4h-2z",
-                        strokeWidth: "1.2"
-                    }), o.a.createElement("path", {
-                        d: "M12 16v2",
-                        strokeWidth: "1.2"
-                    })))) : null), o.a.createElement(Ya, {
-                        className: Xa.a.biip
-                    }))))
-                };
-            Za.propTypes = {
+                        })
+                    }, t.prototype.componentWillUnmount = function() {
+                        window.removeEventListener("vk-storage-progress", this.handleVkProgress)
+                    }, t.prototype.render = function() {
+                        var e = this,
+                            t = this.props,
+                            n = t.start,
+                            r = t.setStart,
+                            a = t.onEnterComplete,
+                            i = t.showEnterAnimation,
+                            s = this.state.lastLevelInfo;
+                        return o.a.createElement(Qa.Transition, {
+                            in: n,
+                            timeout: 1e3,
+                            mountOnEnter: !0,
+                            unmountOnExit: !0,
+                            onEnter: function() {
+                                return Ja(e._container, 1, "in", a)
+                            },
+                            onExit: function() {
+                                return Ja(e._container, 1, "out")
+                            },
+                            enter: i
+                        }, o.a.createElement("div", {
+                            ref: function(t) {
+                                return e._container = t
+                            },
+                            className: Xa.a.main
+                        }, o.a.createElement("div", {
+                            className: Xa.a.inner
+                        }, o.a.createElement("div", {
+                            className: Xa.a.info
+                        }, o.a.createElement("span", {
+                            dangerouslySetInnerHTML: {
+                                __html: _a(["Equinor", "Morgenendagens", "kodedager", "Helter", "Vitenfabrikken"], f()("startScreen.lead"))
+                            }
+                        }), " ", o.a.createElement("span", {
+                            className: Xa.a.link
+                        }, o.a.createElement(T.a, {
+                            to: "/kodedager"
+                        }, f()("startScreen.link")))), o.a.createElement("div", {
+                            className: Xa.a.game
+                        }, o.a.createElement("h1", {
+                            dangerouslySetInnerHTML: {
+                                __html: _a(["Biip"], f()("startScreen.title"))
+                            }
+                        }), o.a.createElement("button", {
+                            className: Xa.a.button,
+                            onClick: function() {
+                                g({
+                                    event: "VirtualPageview",
+                                    virtualPageURL: "/startscreen/" + "startgamebutton"
+                                }), r(!1)
+                            }
+                        }, o.a.createElement("span", null, f()("startScreen.button")), o.a.createElement(Ua, null)), s ? o.a.createElement("button", {
+                            className: Xa.a.button,
+                            onClick: function() {
+                                g({
+                                    event: "VirtualPageview",
+                                    virtualPageURL: "/startscreen/" + "continuegamebutton"
+                                }), r(!1)
+                            }
+                        }, o.a.createElement("span", null, f()("startScreen.continueButton")), o.a.createElement("svg", {
+                            height: "24",
+                            viewBox: "0 0 24 24",
+                            width: "24",
+                            xmlns: "http://www.w3.org/2000/svg"
+                        }, o.a.createElement("g", {
+                            fill: "none",
+                            stroke: "#ff003a"
+                        }, o.a.createElement("path", {
+                            d: "M5 3h11l4 4v14H5z"
+                        }), o.a.createElement("path", {
+                            d: "M9 3v6h6V3",
+                            strokeWidth: "1.2"
+                        }), o.a.createElement("rect", {
+                            height: "6",
+                            width: "10",
+                            x: "7",
+                            y: "14"
+                        }), o.a.createElement("path", {
+                            d: "M14 3h2v4h-2z",
+                            strokeWidth: "1.2"
+                        }), o.a.createElement("path", {
+                            d: "M12 16v2",
+                            strokeWidth: "1.2"
+                        })))) : null), o.a.createElement(Ya, {
+                            className: Xa.a.biip
+                        }))))
+                    }, t
+                }(o.a.Component);
+Za.propTypes = {
                 start: p.bool,
                 setStart: p.func,
                 onEnterComplete: p.func,
